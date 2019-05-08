@@ -1,0 +1,25 @@
+int voyelle(char chaine[16])
+{
+   int count_v = 0;
+   int i;
+   for(i=0; chaine[i]!='\0';i++)
+   {
+      if (chaine[i]=='a' || chaine[i]=='e' || chaine[i]=='i' || chaine[i]=='o' || chaine[i]=='u' || chaine[i]=='y')
+          count_v+=1;
+      
+   }
+   return count_v;
+}
+
+int consonne(char chaine[16])
+{
+   int count_c = 0;
+   int i;
+   for(i=0; chaine[i]!='\0';i++)
+   {
+      if (chaine[i]!='a' && chaine[i]!='e' && chaine[i]!='i' && chaine[i]!='o' && chaine[i]!='u' && chaine[i]!='y')
+          count_c+=1;
+      
+   }
+   return count_c;
+}
