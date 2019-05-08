@@ -1,0 +1,39 @@
+int outfichier (Liste2 list2, char *str){
+    
+    
+    
+    if (!list2)
+    {
+        exit(EXIT_FAILURE);
+    }
+    
+    int fd = open(str, O_APPEND)
+    Element2 *premier = list->premier;
+    
+    while (premier)
+    {
+        fputs(list2->premier->trad, fd)
+        suppression2(list2)
+    }
+    printf("NULL\n");
+}
+
+
+
+int outconsole(Liste2 list2){
+    
+    if (!list2)
+    {
+        exit(EXIT_FAILURE);
+    }
+    
+    Element2 *premier = list2->premier;
+    
+    while(premier)
+    {
+        printf("%s\n", list2->premier->trad);
+        suppression2(list2);
+        
+    }
+    
+}
