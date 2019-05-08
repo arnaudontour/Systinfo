@@ -7,9 +7,10 @@ int main(int argc, char *argv[]) {
     
     int options = 0;
     char *nthreads = "1";
-    char *consvoy = "v";      */Ne compile pas quand je transforme le v en True*/
+    char *consvoy = "v";
     char *fichierout = NULL;
-    char *fichier1;
+    char fichiers[taille]; */ajouter une taille assez importante pour inclure tt les fichiers*/
+    
     
     
     
@@ -27,21 +28,20 @@ int main(int argc, char *argv[]) {
                 fichierout = optarg;
                 break;
                 
-            
-            */Trouver comment faire pour les fichiers*/
-            
             case 'f' :
                 fichier1 = 'f';
                 printf(fichier1);
                 break;
                 
-                for(int i=0;i<argc;i++){
-                    if argv[i]=="."{
-                        int len = i+3;
-                        int j = i;
-                        while argv[j]!=" "{
-                            j-=1;}
-                        if argv[j-2]!="-"{
-                            char *string;
-                            while (j<len){
-                                
+            case '?':
+                strcat(fichiers, '?');
+                break;
+            default :
+                return 1;
+                
+                
+            }
+                            
+                            
+    }
+}
