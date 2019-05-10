@@ -631,4 +631,5 @@ else{
 printf("%d",test);
 if(verbose)
     printf("fin");
+return 0;
 }
