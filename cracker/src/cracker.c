@@ -15,6 +15,7 @@
 #include <semaphore.h>
 #include "sha256.c"
 #include "reverse.c"
+#include <sys/stat.h>
 
 
 // TOUTE LES CONSTANTES
@@ -30,6 +31,8 @@ sem_t full;
 sem_t empty2;
 sem_t full2;
 
+// TOUTE LES CONSTANTES
+
 int nmbfiles;
 char **fichier;
 bool fini;
@@ -39,9 +42,12 @@ bool isconsonne;
 int nthread;
 int nmb;
 int nbmarg;
-//ARRAYLIST BUFFER 1 (32bytes)
-
 bool verbose=false;
+
+
+//ARRAYLIST BUFFER 1 (list1), qui va stocker les hashes
+
+
 
 typedef struct Element Element;
 struct Element
@@ -57,7 +63,7 @@ struct Liste
     Element *premier;
 };
 
-Liste *initialisation()
+Liste *initialisation() // initialisation de l'array list
 {
     Liste *liste = malloc(sizeof(*liste));
     Element *element = malloc(sizeof(*element));
@@ -75,7 +81,7 @@ Liste *initialisation()
 }
 
 
-void insertion(Liste *liste, uint8_t *value)
+void insertion(Liste *liste, uint8_t *value) //methode permettant d'inserer un nouveau hash dans l'array list
 {
     /* Création du nouvel élément */
     Element *nouveau = malloc(sizeof(struct Element));
@@ -91,7 +97,7 @@ void insertion(Liste *liste, uint8_t *value)
     liste->premier = nouveau;
 }
 
-void suppression(Liste *liste)
+void suppression(Liste *liste) //methode permettant de supprimer un hash dans l'array list
 {
     if (liste == NULL)
     {
@@ -107,7 +113,14 @@ void suppression(Liste *liste)
     }
 }
 
-//ARRAYLIST BUFFER 2 (liste avec les traductions)
+void delete2(Liste *liste1){ //permet de supprimer tout les éléments de l'array list sauf le dernier (celui qui a été initialisé par initialisation)
+    while(liste1->premier->suivant != NULL){
+        
+        suppression(liste1);
+    }
+}
+
+//ARRAYLIST BUFFER 2 (list2), buffer contenant les traductions des hash
 
 typedef struct Element2 Element2;
 struct Element2
@@ -123,7 +136,7 @@ struct Liste2
     Element2 *premier;
 };
 
-Liste2 *initialisation2()
+Liste2 *initialisation2() // initialisation de l'array list
 {
     Liste2 *liste2 = malloc(sizeof(*liste2));
     Element2 *element2 = malloc(sizeof(*element2));
@@ -141,7 +154,7 @@ Liste2 *initialisation2()
 }
 
 
-void insertion2(Liste2 *liste2, char* trad)
+void insertion2(Liste2 *liste2, char* trad) //methode permettant d'inserer une nouvelle traduction dans l'array list
 {
     /* Création du nouvel élément */
     Element2 *nouveau = malloc(sizeof(struct Element2));
@@ -157,7 +170,7 @@ void insertion2(Liste2 *liste2, char* trad)
     liste2->premier = nouveau;
 }
 
-void suppression2(Liste2 *liste2)
+void suppression2(Liste2 *liste2) //methode permettant de supprimer une traduction dans l'array list
 {
     if (liste2 == NULL)
     {
@@ -173,25 +186,20 @@ void suppression2(Liste2 *liste2)
     }
 }
 
-//DELETE POUR LE BUFFER 3 (List avec X nombre de voyelle ou consonne)
+//permet de supprimer tout les éléments de l'array list sauf le dernier (celui qui a été initialisé par initialisation)
 void delete(Liste2 *liste2){
     while(liste2->premier->suivant != NULL){
         free(liste2->premier->trad);
         suppression2(liste2);
     }
 }
-void delete2(Liste *liste1){
-    while(liste1->premier->suivant != NULL){
-        
-        suppression(liste1);
-    }
-}
+
 // fonction pour voyelle consonne
 Liste *list1;
 Liste2 *list2;
 Liste2 *list3;
 
-int voyelle(char chaine[16])
+int voyelle(char chaine[16]) // cette fonction retourne le nombre de voyelle contenu de la chaine de caractere
 {
    int count_v = 0;
    int i;
@@ -204,7 +212,7 @@ int voyelle(char chaine[16])
    return count_v;
 }
 
-int consonne(char chaine[16])
+int consonne(char chaine[16]) // cette fonction retourne le nombre de consonne contenu de la chaine de caractere
 {
    int count_c = 0;
    int i;
@@ -216,32 +224,65 @@ int consonne(char chaine[16])
    }
    return count_c;
 }
-// fonctin d'écriture sur console/fichier
-/*void outfichier (Liste2 *list2, char *str){
-    
-    
-    
-    if (list2 == NULL)
-    {
-        exit(EXIT_FAILURE);
-    }
-    
-    int fd = open(str, O_APPEND);
-    Element2 *premier = list2->premier;
-    
-    while (premier)
-    {
-        fputs(list2->premier->trad, fd)
-        suppression2(list2)
-    }
-    printf("NULL\n");
+
+int copy(char *file_name, char *new_file_name) {
+int fd = open(file_name, O_CREAT|O_RDWR);
+if(fd==-1){
+    return -1;
+}
+struct stat x;
+int err = stat(file_name,&x);
+if(err == -1){
+    return -1;
+}
+chmod(new_file_name,x.st_mode);
+int fdbis = open(new_file_name,O_CREAT|O_RDWR);
+if(fdbis == -1){
+    close(fd);
+    return -1;
     
 }
-*/
 
 
+int taille = x.st_size;
+char trans;
+err = read(fd,(void *) &trans,taille);
+if(err ==-1){
+    return -1;
+}
+err=write(fdbis, (void *) &trans,err);
+if(err==-1){
+    return -1;
+}
 
-void outconsole(Liste2 *list2){
+err = close(fd);
+int err2 = close(fdbis);
+if(err==-1||err2 ==-1){
+    return -1;
+}
+return 0;
+}
+
+// fonctin d'écriture sur console/fichier //cette fonction prend une array et un string et créer un fichier (str) et le rempli avec toute les traduction de l'array
+void outfichier(Liste2 *list2, char *str){
+    
+    while(list2->premier->suivant != NULL){
+    
+        
+        int a = copy(list2->premier->trad, str);
+        if(a != 0)
+            printf("copie raté");
+
+        
+        suppression2(list2);
+   
+}
+    return;
+    
+}
+
+
+void outconsole(Liste2 *list2){  //print les traductions present dans la list2 
    
     while(list2->premier->suivant != NULL){
     
@@ -255,7 +296,7 @@ void outconsole(Liste2 *list2){
 
  //Premier producteur
 
-void * producer(void*arg){
+void * producer(void*arg){ //premier producteur qui va prendre les hash dans un fichier et les placé dans list1
 	int i;
     if(verbose)
         printf("debut producteur\n");
@@ -311,7 +352,7 @@ void * producer(void*arg){
 
 // premier consommateur
 
-void* consumer(void*arg){
+void* consumer(void*arg){  // ce consommateur va prendre prendre les hashs de la list1, va les traduires et ls placé dans list 2
  if(verbose)
     printf("debut consumer\n");
 while(!fini || list1->premier->suivant!=NULL){
@@ -350,7 +391,7 @@ while(!fini || list1->premier->suivant!=NULL){
 return NULL;
 }
 
-void* consumer2(void*arg){  // ICI ON VA METTRE QU'UN THREAD DU COUP BALLEC
+void* consumer2(void*arg){  // on va regarder toute les traductions de la list 2 et placé celles qui ont le plus de voyelle ou de consonne dans list3
 
  if(verbose)
     printf("debut consumer2\n");
@@ -384,6 +425,7 @@ acc = consonne(trans);
     else if(acc > nmb){
         delete(list3);
         insertion2(list3,trans);
+        nmb =acc;
     }
     else{
         free(trans);
@@ -418,13 +460,13 @@ int main (int argc, char *argv[]){
 // variable utile;
 int err;
 fini = false;
-nmb = 1;
-nmbfiles= 1;
+nmb = 0; //nombre de consonne/voyelle
+nmbfiles= 1; //nombre de fichier a traité
 fichier = argv;
 isconsonne = false;
 nthread = 1;
 char options;
-//bool isfichierout =false;
+bool isfichierout = false;
 char* fichierout = NULL;
 nbmarg = argc;
 
@@ -440,12 +482,12 @@ while((options=getopt(argc, argv,"t:co:v"))!= -1){
         break;
 
         case 'o' : 
-        //isfichierout = true;
+        isfichierout = true;
         fichierout = optarg;
         break;
 
         case 'v' :
-        verbose = true;
+        verbose = true; //permet d'enlever les print pour alléger la console
         break;
     }
 }
@@ -504,7 +546,7 @@ if(verbose)
     printf("fin creation trhead consumer\n");
 if(verbose)
     printf("creation trhead consumer2\n");
-//sleep(10);
+
 sleep(2);
 err=pthread_create(&thread3,NULL,consumer2,NULL);
 if(err != 0){
@@ -542,13 +584,13 @@ if(verbose)
 if(verbose)
     printf("ecriture console/fichier \n");
 
-if(!fichierout){
+if(!isfichierout){
     outconsole(list3);
 }
-
 else{
-    // a écrire
+    outfichier(list3, fichierout);
 }
+
 
 
     sem_destroy(&full);
