@@ -1,6 +1,6 @@
 
 
-#include <CUnit/Cunit.h>
+#include <CUnit/CUnit.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

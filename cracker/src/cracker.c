@@ -15,7 +15,8 @@
 #include <semaphore.h>
 #include "sha256.c"
 #include "reverse.c"
-#include <sys/stat.h>
+
+
 
 
 // TOUTE LES CONSTANTES
@@ -43,7 +44,7 @@ int nthread;
 int nmb;
 int nbmarg;
 bool verbose=false;
-
+int test;
 
 //ARRAYLIST BUFFER 1 (list1), qui va stocker les hashes
 
@@ -225,7 +226,7 @@ int consonne(char chaine[16]) // cette fonction retourne le nombre de consonne c
    return count_c;
 }
 
-int copy(char *file_name, char *new_file_name) {
+/*int copy(char *file_name, char *new_file_name) {
 int fd = open(file_name, O_CREAT|O_RDWR);
 if(fd==-1){
     return -1;
@@ -262,24 +263,39 @@ if(err==-1||err2 ==-1){
 }
 return 0;
 }
-
+*/
 // fonctin d'écriture sur console/fichier //cette fonction prend une array et un string et créer un fichier (str) et le rempli avec toute les traduction de l'array
 void outfichier(Liste2 *list2, char *str){
-    
-    while(list2->premier->suivant != NULL){
-    
-        
-        int a = copy(list2->premier->trad, str);
-        if(a != 0)
-            printf("copie raté");
+    int fd = open(str,O_WRONLY|O_CREAT);
+    if (fd==-1)
+    {
+        printf("ca ouvre pas\n");
+    }
 
+    while(list2->premier->suivant != NULL){
+        char *a = list2->premier->trad;
+        int ecrire = write(fd,a,strlen(a));
+
+        if(ecrire == -1){
+            printf("ça ecrit pas\n");
+        }
+
+        int ecrire2 = write(fd,"\n",sizeof(char));
+            if(ecrire2 == -1){
+                printf("dfjndjf\n");
+            }
         
         suppression2(list2);
    
 }
-    return;
+   int err = close(fd);
+   if(err == -1){
+    printf("hihi\n");
+   }
+    return; 
     
 }
+
 
 
 void outconsole(Liste2 *list2){  //print les traductions present dans la list2 
@@ -376,6 +392,7 @@ while(!fini || list1->premier->suivant!=NULL){
             printf("%d",ret);
         sem_wait(&empty2);
         pthread_mutex_lock(&mutex2);
+        test++;
         insertion2(list2, (void *) x);
         pthread_mutex_unlock(&mutex2);
         sem_post(&full2);
@@ -442,7 +459,7 @@ else{
         nmb=acc;
     }
     else{
-        free(trans);
+        free(trans);  
     }
 
 }
@@ -469,6 +486,7 @@ char options;
 bool isfichierout = false;
 char* fichierout = NULL;
 nbmarg = argc;
+test = 0;
 
 while((options=getopt(argc, argv,"t:co:v"))!= -1){
     switch(options){
@@ -588,7 +606,7 @@ if(!isfichierout){
     outconsole(list3);
 }
 else{
-    outfichier(list3, fichierout);
+   outfichier(list3, fichierout);
 }
 
 
@@ -610,7 +628,7 @@ else{
     free(list1);
     free(list2);
     free(list3);
-
+printf("%d",test);
 if(verbose)
     printf("fin");
 }
